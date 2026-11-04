@@ -110,6 +110,15 @@
   .preset-card:hover { transform: translateY(-2px); border-color: var(--accent); }
   .preset-card span { font-size: 8px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
 
+  .ex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-bottom: 20px; }
+  .ex-card {
+    background: var(--bg); border: 1px solid var(--border); padding: 12px 6px 8px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 8px; transition: 0.2s;
+  }
+  .ex-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .ex-card canvas { image-rendering: pixelated; max-width: 100%; }
+  .ex-card span { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
+
   .btn-main {
     width: 100%; padding: 16px; background: var(--accent); color: #fff; border: none;
     font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 12px;
@@ -204,8 +213,8 @@
       <div class="input-group">
         <label>Направление градиента</label>
         <div class="toggle-group">
-          <button class="toggle-btn active" onclick="setDir('H', this)">Горизонтально</button>
-          <button class="toggle-btn" onclick="setDir('V', this)">Вертикально</button>
+          <button class="toggle-btn active" data-g="dir" data-v="H" onclick="setDir('H', this)">Горизонтально</button>
+          <button class="toggle-btn" data-g="dir" data-v="V" onclick="setDir('V', this)">Вертикально</button>
         </div>
       </div>
 
@@ -225,8 +234,8 @@
         <div class="input-group">
           <label>Обводка</label>
           <div class="toggle-group">
-            <button class="toggle-btn active" onclick="setOutline(true, this)">Вкл</button>
-            <button class="toggle-btn" onclick="setOutline(false, this)">Выкл</button>
+            <button class="toggle-btn active" data-g="outline" data-v="true" onclick="setOutline(true, this)">Вкл</button>
+            <button class="toggle-btn" data-g="outline" data-v="false" onclick="setOutline(false, this)">Выкл</button>
           </div>
         </div>
         <div class="input-group">
@@ -264,24 +273,33 @@
         <input type="range" id="padV" min="0" max="6" value="2">
       </div>
 
-      <div class="input-group">
-        <label>Тень текста</label>
-        <div class="toggle-group">
-          <button class="toggle-btn active" onclick="setShadow(true, this)">Вкл</button>
-          <button class="toggle-btn" onclick="setShadow(false, this)">Выкл</button>
+      <div class="color-grid">
+        <div class="input-group">
+          <label>Тень текста</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" data-g="shadow" data-v="true" onclick="setShadow(true, this)">Вкл</button>
+            <button class="toggle-btn" data-g="shadow" data-v="false" onclick="setShadow(false, this)">Выкл</button>
+          </div>
+        </div>
+        <div class="input-group">
+          <label>Тень иконки</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" data-g="shadowIcon" data-v="true" onclick="setIconShadow(true, this)">Вкл</button>
+            <button class="toggle-btn" data-g="shadowIcon" data-v="false" onclick="setIconShadow(false, this)">Выкл</button>
+          </div>
         </div>
       </div>
 
       <div class="input-group">
         <label>Стиль углов</label>
         <div class="toggle-group">
-          <button class="toggle-btn active" onclick="setCorner('round', this)">Скругленные</button>
-          <button class="toggle-btn" onclick="setCorner('sharp', this)">Острые</button>
+          <button class="toggle-btn active" data-g="corner" data-v="round" onclick="setCorner('round', this)">Скругленные</button>
+          <button class="toggle-btn" data-g="corner" data-v="sharp" onclick="setCorner('sharp', this)">Острые</button>
         </div>
       </div>
 
-      <label>Готовые палитры</label>
-      <div class="presets-grid" id="presetsArea"></div>
+      <label>Готовые примеры префиксов</label>
+      <div class="ex-grid" id="presetsArea"></div>
 
       <button class="btn-main" onclick="download()">СКАЧАТЬ PNG</button>
       <button class="btn-alt" onclick="downloadLarge()">СКАЧАТЬ x16 (HD)</button>
@@ -325,43 +343,49 @@ const ICONS = [
   { n: '⛨', g: [31,31,31,14,4] }
 ];
 
-const PRESETS = [
-  { n: 'Fever', c1: '#ff0000', c2: '#7a0000', t: '#ffffff' },
-  { n: 'Ruby', c1: '#e11d48', c2: '#4c0519', t: '#ffffff' },
-  { n: 'Ocean', c1: '#0ea5e9', c2: '#0c4a6e', t: '#ffffff' },
-  { n: 'Toxic', c1: '#4ade80', c2: '#064e3b', t: '#ffffff' },
-  { n: 'Amber', c1: '#f59e0b', c2: '#451a03', t: '#ffffff' },
-  { n: 'Neon', c1: '#00f2ff', c2: '#7000ff', t: '#ffffff' },
-  { n: 'Obsidian', c1: '#1e293b', c2: '#000000', t: '#cbd5e1' },
-  { n: 'Candy', c1: '#f472b6', c2: '#9d174d', t: '#ffffff' },
-  { n: 'Lava', c1: '#f97316', c2: '#7f1d1d', t: '#fffbeb' },
-  { n: 'Forest', c1: '#22c55e', c2: '#14532d', t: '#f0fdf4' },
-  { n: 'Staff', c1: '#ffffff', c2: '#94a3b8', t: '#0f172a' },
-  { n: 'Ultra', c1: '#fbbf24', c2: '#d97706', t: '#000000' }
+const ic = ch => ICONS.find(i => i.n === ch).g;
+
+// Готовые примеры префиксов (можно добавлять свои)
+const EXAMPLES = [
+  { n: 'Админ',   text: 'АДМИН',   c1: '#ff0000', c2: '#7a0000', ct: '#ffffff', ci: '#ffd700', icon: ic('♛') },
+  { n: 'VIP',     text: 'VIP',     c1: '#fbbf24', c2: '#b45309', ct: '#ffffff', ci: '#ffffff', icon: ic('★') },
+  { n: 'Модер',   text: 'МОДЕР',   c1: '#0ea5e9', c2: '#0c4a6e', ct: '#ffffff', ci: '#e0f2fe', icon: ic('⛨') },
+  { n: 'Хелпер',  text: 'ХЕЛПЕР',  c1: '#4ade80', c2: '#064e3b', ct: '#ffffff', ci: '#ffffff', icon: ic('✚') },
+  { n: 'Owner',   text: 'OWNER',   c1: '#00f2ff', c2: '#7000ff', ct: '#ffffff', ci: '#ffffff', icon: ic('⬥'), dir: 'V' },
+  { n: 'Зима',    text: 'ЗИМА',    c1: '#bae6fd', c2: '#1e3a8a', ct: '#ffffff', ci: '#ffffff', icon: ic('❅') },
+  { n: 'Legend',  text: 'LEGEND',  c1: '#f97316', c2: '#7f1d1d', ct: '#fffbeb', ci: '#fde047', icon: ic('🔥'), corner: 'sharp' },
+  { n: 'Toxic',   text: 'TOXIC',   c1: '#22c55e', c2: '#14532d', ct: '#f0fdf4', ci: '#bbf7d0', icon: ic('☠') },
+  { n: 'Love',    text: 'LOVE',    c1: '#f472b6', c2: '#9d174d', ct: '#ffffff', ci: '#ffffff', icon: ic('♥') },
+  { n: 'Player', text: 'PLAYER', c1: '#1e293b', c2: '#000000', ct: '#cbd5e1', icon: null, outline: false }
 ];
+
+const BASE = { co: '#000000', cs: '#000000', ci: '#ffffff', outline: true, shadow: true, shadowIcon: true,
+               padH: 4, padV: 2, dir: 'H', corner: 'round' };
 
 const ICON_GAP = 2; // пикселей между иконкой и текстом
 
 let state = {
   text: 'АДМИН', c1: '#ff0000', c2: '#7a0000', ct: '#ffffff', cs: '#000000', ci: '#ffffff',
-  co: '#000000', outline: true, padH: 4, padV: 2, dir: 'H', shadow: true, corner: 'round',
+  co: '#000000', outline: true, shadowIcon: true, padH: 4, padV: 2, dir: 'H', shadow: true, corner: 'round',
   icon: ICONS[0].g.slice()
 };
 
 // ---------- INIT ----------
 function init() {
-  // палитры
+  // готовые примеры
   const area = document.getElementById('presetsArea');
-  PRESETS.forEach(p => {
+  EXAMPLES.forEach(ex => {
+    const st = Object.assign({}, state, BASE, ex, { icon: ex.icon ? ex.icon.slice() : null });
+    const r = render(st);
+    const c = document.createElement('canvas');
+    c.width = r.w; c.height = r.h;
+    c.getContext('2d').putImageData(new ImageData(r.out, r.w, r.h), 0, 0);
+    c.style.width = r.w * 3 + 'px';
     const d = document.createElement('div');
-    d.className = 'preset-card';
-    d.style.background = `linear-gradient(135deg, ${p.c1}, ${p.c2})`;
-    d.innerHTML = `<span style="color:${p.t}">${p.n}</span>`;
-    d.onclick = () => {
-      state.c1 = p.c1; state.c2 = p.c2; state.ct = p.t; state.ci = p.t;
-      clr1.value = p.c1; clr2.value = p.c2; clrT.value = p.t; clrI.value = p.t;
-      update();
-    };
+    d.className = 'ex-card';
+    d.appendChild(c);
+    d.insertAdjacentHTML('beforeend', `<span>${ex.n}</span>`);
+    d.onclick = () => applyExample(ex);
     area.appendChild(d);
   });
 
@@ -429,6 +453,22 @@ function setDir(d, btn) { state.dir = d; pick(btn); update(); }
 function setShadow(v, btn) { state.shadow = v; pick(btn); update(); }
 function setCorner(v, btn) { state.corner = v; pick(btn); update(); }
 function setOutline(v, btn) { state.outline = v; pick(btn); update(); }
+function setIconShadow(v, btn) { state.shadowIcon = v; pick(btn); update(); }
+
+function syncToggles() {
+  document.querySelectorAll('.toggle-btn[data-g]').forEach(b =>
+    b.classList.toggle('active', String(state[b.dataset.g]) === b.dataset.v));
+}
+
+function applyExample(ex) {
+  Object.assign(state, BASE, ex, { icon: ex.icon ? ex.icon.slice() : null });
+  inpText.value = state.text;
+  clr1.value = state.c1; clr2.value = state.c2; clrT.value = state.ct;
+  clrS.value = state.cs; clrI.value = state.ci; clrO.value = state.co;
+  padH.value = state.padH; padV.value = state.padV;
+  syncToggles();
+  update();
+}
 
 function iconClear() { state.icon = [0,0,0,0,0]; update(); }
 function iconInvert() { state.icon = (state.icon || [0,0,0,0,0]).map(r => ~r & 31); update(); }
@@ -438,26 +478,23 @@ function hexToRgb(hex) {
 }
 
 // ---------- DRAW ----------
-function draw() {
-  const canvas = document.getElementById('mainCanvas');
-  const hasIcon = !!(state.icon && state.icon.some(r => r));
-  const chars = [...state.text];
-  let textW = chars.length ? chars.length * 6 - 1 : 0;
+function render(st) {
+  const hasIcon = !!(st.icon && st.icon.some(r => r));
+  const chars = [...st.text];
+  const textW = chars.length ? chars.length * 6 - 1 : 0;
   const iconW = hasIcon ? 5 : 0;
   const gap = hasIcon && textW ? ICON_GAP : 0;
 
-  const W = iconW + gap + textW + state.padH * 2;
-  const H = 5 + state.padV * 2;
+  const W = iconW + gap + textW + st.padH * 2;
+  const H = 5 + st.padV * 2;
 
-  // базовое изображение (без обводки)
   const data = new Uint8ClampedArray(W * H * 4);
-  const rgb1 = hexToRgb(state.c1), rgb2 = hexToRgb(state.c2);
+  const rgb1 = hexToRgb(st.c1), rgb2 = hexToRgb(st.c2);
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
-      if (state.corner === 'round' &&
-          ((x === 0 || x === W - 1) && (y === 0 || y === H - 1))) continue;
+      if (st.corner === 'round' && ((x === 0 || x === W - 1) && (y === 0 || y === H - 1))) continue;
       const i = (y * W + x) * 4;
-      const t = state.dir === 'H' ? x / (W - 1 || 1) : y / (H - 1 || 1);
+      const t = st.dir === 'H' ? x / (W - 1 || 1) : y / (H - 1 || 1);
       data[i] = rgb1[0] + (rgb2[0] - rgb1[0]) * t;
       data[i+1] = rgb1[1] + (rgb2[1] - rgb1[1]) * t;
       data[i+2] = rgb1[2] + (rgb2[2] - rgb1[2]) * t;
@@ -465,53 +502,56 @@ function draw() {
     }
   }
 
-  // элементы: иконка первая (слева), затем текст
+  // иконка первая (слева), затем текст
   const items = [];
-  let curX = state.padH;
-  if (hasIcon) { items.push({ g: state.icon, x: curX, col: hexToRgb(state.ci) }); curX += 5 + gap; }
-  const rgbT = hexToRgb(state.ct);
-  for (const ch of chars) { items.push({ g: FONT[ch] || FONT[' '], x: curX, col: rgbT }); curX += 6; }
+  let curX = st.padH;
+  if (hasIcon) { items.push({ g: st.icon, x: curX, col: hexToRgb(st.ci), sh: st.shadowIcon }); curX += 5 + gap; }
+  const rgbT = hexToRgb(st.ct);
+  for (const ch of chars) { items.push({ g: FONT[ch] || FONT[' '], x: curX, col: rgbT, sh: st.shadow }); curX += 6; }
 
-  const rgbS = hexToRgb(state.cs);
+  const rgbS = hexToRgb(st.cs);
   const put = (px, py, c, a) => {
     if (px < 0 || py < 0 || px >= W || py >= H) return;
     const i = (py * W + px) * 4;
     data[i] = c[0]; data[i+1] = c[1]; data[i+2] = c[2]; data[i+3] = a;
   };
-  const each = fn => items.forEach(it => {
+  const each = (fn, onlyShadow) => items.forEach(it => {
+    if (onlyShadow && !it.sh) return;
     for (let r = 0; r < 5; r++) for (let k = 0; k < 5; k++)
-      if ((it.g[r] >> (4 - k)) & 1) fn(it.x + k, state.padV + r, it.col);
+      if ((it.g[r] >> (4 - k)) & 1) fn(it.x + k, st.padV + r, it.col);
   });
-  if (state.shadow) each((px, py) => { if (px + 1 < W && py + 1 < H) put(px + 1, py + 1, rgbS, 180); });
+  each((px, py) => { if (px + 1 < W && py + 1 < H) put(px + 1, py + 1, rgbS, 180); }, true);
   each((px, py, c) => put(px, py, c, 255));
 
+  if (!st.outline) return { out: data, w: W, h: H };
+
   // обводка: +1 пиксель со всех сторон
-  let outW = W, outH = H, out = data;
-  if (state.outline) {
-    outW = W + 2; outH = H + 2;
-    out = new Uint8ClampedArray(outW * outH * 4);
-    const rgbO = hexToRgb(state.co);
-    const filled = (x, y) => x >= 0 && y >= 0 && x < W && y < H && data[(y * W + x) * 4 + 3] > 0;
-    for (let y = 0; y < outH; y++) {
-      for (let x = 0; x < outW; x++) {
-        const sx = x - 1, sy = y - 1, i = (y * outW + x) * 4;
-        if (filled(sx, sy)) {
-          const j = (sy * W + sx) * 4;
-          out[i] = data[j]; out[i+1] = data[j+1]; out[i+2] = data[j+2]; out[i+3] = data[j+3];
-        } else if (filled(sx - 1, sy) || filled(sx + 1, sy) || filled(sx, sy - 1) || filled(sx, sy + 1)) {
-          out[i] = rgbO[0]; out[i+1] = rgbO[1]; out[i+2] = rgbO[2]; out[i+3] = 255;
-        }
+  const oW = W + 2, oH = H + 2;
+  const out = new Uint8ClampedArray(oW * oH * 4);
+  const rgbO = hexToRgb(st.co);
+  const filled = (x, y) => x >= 0 && y >= 0 && x < W && y < H && data[(y * W + x) * 4 + 3] > 0;
+  for (let y = 0; y < oH; y++) {
+    for (let x = 0; x < oW; x++) {
+      const sx = x - 1, sy = y - 1, i = (y * oW + x) * 4;
+      if (filled(sx, sy)) {
+        const j = (sy * W + sx) * 4;
+        out[i] = data[j]; out[i+1] = data[j+1]; out[i+2] = data[j+2]; out[i+3] = data[j+3];
+      } else if (filled(sx - 1, sy) || filled(sx + 1, sy) || filled(sx, sy - 1) || filled(sx, sy + 1)) {
+        out[i] = rgbO[0]; out[i+1] = rgbO[1]; out[i+2] = rgbO[2]; out[i+3] = 255;
       }
     }
   }
+  return { out, w: oW, h: oH };
+}
 
-  canvas.width = outW; canvas.height = outH;
-  const ctx = canvas.getContext('2d');
-  ctx.putImageData(new ImageData(out, outW, outH), 0, 0);
-  canvas.style.width = outW * 2 + 'px';
+function draw() {
+  const canvas = document.getElementById('mainCanvas');
+  const r = render(state);
+  canvas.width = r.w; canvas.height = r.h;
+  canvas.getContext('2d').putImageData(new ImageData(r.out, r.w, r.h), 0, 0);
+  canvas.style.width = r.w * 2 + 'px';
 
-  // UI
-  resInfo.innerText = `Размер: ${outW}x${outH} px`;
+  resInfo.innerText = `Размер: ${r.w}x${r.h} px`;
   hex1.innerText = state.c1.toUpperCase();
   hex2.innerText = state.c2.toUpperCase();
   vPadH.innerText = state.padH;
