@@ -291,6 +291,12 @@
       </div>
 
       <div class="input-group">
+        <label>Смещение тени (X: <span id="vShX">1</span>, Y: <span id="vShY">1</span>)</label>
+        <input type="range" id="shX" min="-3" max="3" value="1">
+        <input type="range" id="shY" min="-3" max="3" value="1">
+      </div>
+
+      <div class="input-group">
         <label>Стиль углов</label>
         <div class="toggle-group">
           <button class="toggle-btn active" data-g="corner" data-v="round" onclick="setCorner('round', this)">Скругленные</button>
@@ -359,14 +365,14 @@ const EXAMPLES = [
   { n: 'Player', text: 'PLAYER', c1: '#1e293b', c2: '#000000', ct: '#cbd5e1', icon: null, outline: false }
 ];
 
-const BASE = { co: '#000000', cs: '#000000', ci: '#ffffff', outline: true, shadow: true, shadowIcon: true,
+const BASE = { co: '#000000', cs: '#000000', ci: '#ffffff', outline: true, shadow: true, shadowIcon: true, shX: 1, shY: 1,
                padH: 4, padV: 2, dir: 'H', corner: 'round' };
 
 const ICON_GAP = 2; // пикселей между иконкой и текстом
 
 let state = {
   text: 'АДМИН', c1: '#ff0000', c2: '#7a0000', ct: '#ffffff', cs: '#000000', ci: '#ffffff',
-  co: '#000000', outline: true, shadowIcon: true, padH: 4, padV: 2, dir: 'H', shadow: true, corner: 'round',
+  co: '#000000', outline: true, shadowIcon: true, shX: 1, shY: 1, padH: 4, padV: 2, dir: 'H', shadow: true, corner: 'round',
   icon: ICONS[0].g.slice()
 };
 
@@ -438,6 +444,8 @@ function init() {
   clrS.oninput = e => { state.cs = e.target.value; update(); };
   clrI.oninput = e => { state.ci = e.target.value; update(); };
   clrO.oninput = e => { state.co = e.target.value; update(); };
+  shX.oninput = e => { state.shX = parseInt(e.target.value); update(); };
+  shY.oninput = e => { state.shY = parseInt(e.target.value); update(); };
   padH.oninput = e => { state.padH = parseInt(e.target.value); update(); };
   padV.oninput = e => { state.padV = parseInt(e.target.value); update(); };
 
@@ -466,6 +474,7 @@ function applyExample(ex) {
   clr1.value = state.c1; clr2.value = state.c2; clrT.value = state.ct;
   clrS.value = state.cs; clrI.value = state.ci; clrO.value = state.co;
   padH.value = state.padH; padV.value = state.padV;
+  shX.value = state.shX; shY.value = state.shY;
   syncToggles();
   update();
 }
@@ -520,7 +529,7 @@ function render(st) {
     for (let r = 0; r < 5; r++) for (let k = 0; k < 5; k++)
       if ((it.g[r] >> (4 - k)) & 1) fn(it.x + k, st.padV + r, it.col);
   });
-  each((px, py) => { if (px + 1 < W && py + 1 < H) put(px + 1, py + 1, rgbS, 180); }, true);
+  each((px, py) => put(px + st.shX, py + st.shY, rgbS, 180), true);
   each((px, py, c) => put(px, py, c, 255));
 
   if (!st.outline) return { out: data, w: W, h: H };
@@ -556,6 +565,8 @@ function draw() {
   hex2.innerText = state.c2.toUpperCase();
   vPadH.innerText = state.padH;
   vPadV.innerText = state.padV;
+  vShX.innerText = state.shX;
+  vShY.innerText = state.shY;
   syncIconUI();
   scalePreview(canvas, 'zoom4x', 4);
   scalePreview(canvas, 'zoom8x', 8);
